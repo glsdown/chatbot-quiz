@@ -5,11 +5,12 @@ class MessageParser {
   }
 
   parse(message) {
-    if (message.includes("hello")) {
+    if (message.includes("hello") || message.includes("hi")) {
       this.actionProvider.handleHello();
-    }
-    if (message.toLowerCase() === "get in the chopper") {
+    } else if (message.toLowerCase() === "get in the chopper") {
       this.actionProvider.handleRecipe();
+    } else {
+      this.actionProvider.handleResponse(this.state, message.toLowerCase());
     }
   }
 }

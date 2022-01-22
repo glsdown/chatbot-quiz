@@ -40,3 +40,19 @@
 button {
   font-size: calc(10px + 2vmin);
 }
+
+.react-chatbot-kit-chat-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.react-chatbot-kit-chat-bot-message {
+  width: auto;
+  max-width: 80vh;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.react-chatbot-kit-chat-message-container {
+  height: calc(100vh - 60px);
+}
