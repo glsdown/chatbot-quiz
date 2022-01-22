@@ -1,4 +1,3 @@
-// new file called DogPicture.jsx
 import React from "react";
 
 const FullRecipe = ({ showIngredients = true, showMethod = true }) => {
@@ -47,9 +46,9 @@ const FullRecipe = ({ showIngredients = true, showMethod = true }) => {
               “seams”. Don't overmix though.
             </li>
             <li>
-              Pour into a lined tin lined with grease-proof paper (make sure
-              paper rises up a little higher than the sides). Make sure it's
-              evenly spread in the tin.
+              Pour into a tin lined with grease-proof paper (make sure paper
+              rises up a little higher than the sides). Make sure it's evenly
+              spread in the tin.
             </li>
             <li>
               Bake for 20-25 minutes. I like my brownies still a little gooey so

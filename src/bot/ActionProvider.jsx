@@ -1,4 +1,4 @@
-import responses from "./responses.json";
+import responses from "./responses/responses.json";
 
 class ActionProvider {
   constructor(createChatbotMessage, setStateFunc, createClientMessage) {
@@ -33,25 +33,25 @@ class ActionProvider {
 
   // Handle question answers
   handleResponse(state, receivedMessage) {
-    // Get the currentSection and questionNumber from the state
-    const currentSection = state.currentSection;
+    // Get the questionNumber from the state
     const questionNumber = state.questionNumber;
-
-    // Identify the current response from the JSON file
-    const currentResponse = responses[currentSection].details[questionNumber];
 
     // Create a variable for the messages
     let message = [];
     let newQuestionNumber = questionNumber;
-    let newCurrentSection = currentSection;
+    let currentDelay = 0;
+    let delayPeriod = 750;
 
     // Check there is a response available in the JSON
-    if (!currentResponse) {
+    if (questionNumber < 0 || questionNumber >= responses.length) {
       message.push(
         this.createChatbotMessage("I don't know how to handle that")
       );
     } else {
       // If there is a response available
+
+      // Identify the current response that was requested from the JSON file
+      const currentResponse = responses[questionNumber];
 
       // Check the question type
       let questionType = currentResponse.responseType;
@@ -59,6 +59,7 @@ class ActionProvider {
       // Check the question type
       if (questionType === "question") {
         // If it's a question, need to handle the response
+        // The question was asked in the previous 'round'
         let allowedResponse = currentResponse.allowedResponse;
         let otherResponse = currentResponse.otherResponse;
         let unknownFeedback = currentResponse.unknownFeedback;
@@ -72,60 +73,106 @@ class ActionProvider {
         );
         if (correctResponse.length > 0) {
           // Give feedback
-          message.push(correctResponse[0].feedback);
+          message.push(
+            this.createChatbotMessage(correctResponse[0].feedback, {
+              delay: currentDelay,
+            })
+          );
           // Get the next question/statement
           newQuestionNumber++;
         } else if (incorrectResponse.length) {
           // Check for other responses
-          message.push(incorrectResponse[0].feedback);
+          message.push(
+            this.createChatbotMessage(incorrectResponse[0].feedback, {
+              delay: currentDelay,
+            })
+          );
         }
         // Return the unknown feedback
         else {
-          message.push(unknownFeedback);
+          message.push(
+            this.createChatbotMessage(unknownFeedback, {
+              delay: currentDelay,
+            })
+          );
         }
       } else {
+        // If it's not a question, just move to the next one as no
+        // response is required
         newQuestionNumber++;
       }
 
-      // Add the next statement/question to the pile
-      message.push(
-        responses[currentSection].details[newQuestionNumber].message
-      );
+      // Increase the message delay
+      currentDelay = currentDelay + delayPeriod;
 
-      // Keep adding statements
-      while (
-        newQuestionNumber + 1 < responses[currentSection].details.length &&
-        responses[currentSection].details[newQuestionNumber].responseType ===
-          "statement"
-      ) {
-        newQuestionNumber++;
+      // Add the next statement/question to the pile
+      if (responses[newQuestionNumber].responseType === "widget") {
+        // If it's a widget, then need to display that
+        // Create the widget
         message.push(
-          responses[currentSection].details[newQuestionNumber].message
+          this.createChatbotMessage(responses[newQuestionNumber].message, {
+            widget: responses[newQuestionNumber].widgetName,
+            delay: currentDelay,
+          })
+        );
+      } else {
+        // Just display the next message as it is
+        message.push(
+          this.createChatbotMessage(responses[newQuestionNumber].message, {
+            delay: currentDelay,
+          })
         );
       }
 
-      if (newQuestionNumber + 1 === responses[currentSection].details.length) {
-        newQuestionNumber = 0;
-        newCurrentSection = currentSection + 1;
-        if (newCurrentSection < responses.length) {
+      // Keep adding statements
+      while (
+        newQuestionNumber + 1 < responses.length &&
+        (responses[newQuestionNumber].responseType === "statement" ||
+          responses[newQuestionNumber].responseType === "widget")
+      ) {
+        // Increase the message delay
+        currentDelay =
+          currentDelay +
+          delayPeriod *
+            Math.ceil(
+              responses[newQuestionNumber].message.split(" ").length / 5
+            );
+
+        // Get the next question
+        newQuestionNumber++;
+
+        // Add the message
+        // Add the next statement/question to the pile
+
+        if (responses[newQuestionNumber].responseType === "widget") {
+          // Create the widget
           message.push(
-            responses[newCurrentSection].details[newQuestionNumber].message
+            this.createChatbotMessage(responses[newQuestionNumber].message, {
+              widget: responses[newQuestionNumber].widgetName,
+              delay: currentDelay,
+            })
+          );
+        } else {
+          // Just display the message as it is
+          message.push(
+            this.createChatbotMessage(responses[newQuestionNumber].message, {
+              delay: currentDelay,
+            })
           );
         }
+      }
+
+      // Loop back to the start if required
+      if (newQuestionNumber + 1 === responses.length) {
+        newQuestionNumber = 0;
       }
     }
 
     // Display the messages
     this.setState((prev) => ({
       ...prev,
-      messages: [
-        ...prev.messages,
-        ...message.map((m, id) =>
-          this.createChatbotMessage(m, { delay: id * 1000 })
-        ),
-      ],
+      messages: [...prev.messages, ...message],
       questionNumber: newQuestionNumber,
-      currentSection: newCurrentSection,
     }));
   }
 }
