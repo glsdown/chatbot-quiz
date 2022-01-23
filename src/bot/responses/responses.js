@@ -1,3 +1,5 @@
+// These are the responses that the bot will provide (and expect)
+
 const responses = [
   {
     message: "Hello, and welcome to the Libic bot 5000.",
