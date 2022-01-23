@@ -1,4 +1,4 @@
-import responses from "./responses/responses.json";
+import responses from "./responses/responses";
 
 class ActionProvider {
   constructor(createChatbotMessage, setStateFunc, createClientMessage) {
